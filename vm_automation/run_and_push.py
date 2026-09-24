@@ -5,15 +5,19 @@ their configured cadence for sub-hourly jobs), doubly true at this
 cadence.
 """
 
+import os
 import subprocess
 import sys
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 REPO_DIR = Path(__file__).resolve().parent.parent
 SRC_DIR = REPO_DIR / "src"
 DATA_FILES = ["data/sentiment_history.csv", "data/state.json", "docs/data.json"]
 
 sys.path.insert(0, str(SRC_DIR))
+load_dotenv(REPO_DIR / ".env")  # populates GITHUB_TOKEN for pushing on the VM
 
 
 def run(*args, check=True):
@@ -57,7 +61,18 @@ def git_commit_and_push(row):
         print("[run_and_push] pipeline produced no row, skipping commit")
         return
     run("git", "commit", "-m", message)
-    run("git", "push", "--force", "origin", "HEAD:main")
+
+    # On the VM this pushes via an authenticated URL built from the .env
+    # token at push time (not stored in git config) since the VM's
+    # remotes use HTTPS+PAT, not a local SSH key. Locally, origin is
+    # already an SSH remote, so GITHUB_TOKEN is unset and this falls back
+    # to the stored remote's own credentials.
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        push_url = f"https://{token}@github.com/nyandajr/global-crypto-sentiment.git"
+        run("git", "push", "--force", push_url, "HEAD:main")
+    else:
+        run("git", "push", "--force", "origin", "HEAD:main")
 
 
 def main():
