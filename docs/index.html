@@ -201,7 +201,12 @@ function drawChart(points) {
   ctx.stroke();
 }
 
-fetch('data.json')
+const REFRESH_INTERVAL_MS = 30000; // poll well under the ~3-min pipeline cadence so new data shows within one tick
+
+function refresh() {
+  // Cache-bust: GitHub Pages/CDN caching would otherwise serve a stale
+  // copy of data.json to a page that's been open for a while.
+  fetch(`data.json?t=${Date.now()}`)
   .then(r => r.json())
   .then(d => {
     const latest = d.latest;
@@ -263,6 +268,10 @@ fetch('data.json')
   .catch(() => {
     document.getElementById('meta').textContent = 'data.json not found yet';
   });
+}
+
+refresh();
+setInterval(refresh, REFRESH_INTERVAL_MS);
 </script>
 </body>
 </html>
