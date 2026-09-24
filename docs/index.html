@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Global Crypto Sentiment</title>
+<script>
+  try {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') document.documentElement.setAttribute('data-theme', saved);
+  } catch (e) {}
+</script>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #F6F3EC;
+    --surface: #FFFFFF;
+    --surface-raised: #FDFBF6;
+    --border: #E4DECE;
+    --text: #21201B;
+    --text-muted: #6B6656;
+    --text-faint: #9A957F;
+    --accent: #C67F1E;
+    --bull: #1E8E5A;
+    --bear: #C6421E;
+    --shadow: 0 1px 2px rgba(33,32,27,0.04), 0 8px 24px -12px rgba(33,32,27,0.12);
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #12181F; --surface: #182029; --surface-raised: #1D2733; --border: #2A3542;
+      --text: #EDE8DE; --text-muted: #A6A18F; --text-faint: #6E6A5C; --accent: #E5A445;
+      --bull: #3DCB86; --bear: #E5674A;
+      --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #12181F; --surface: #182029; --surface-raised: #1D2733; --border: #2A3542;
+    --text: #EDE8DE; --text-muted: #A6A18F; --text-faint: #6E6A5C; --accent: #E5A445;
+    --bull: #3DCB86; --bear: #E5674A;
+    --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding-inline: 20px; padding-block: 44px;
+    background: var(--bg); color: var(--text); font-family: var(--sans);
+    font-variant-numeric: tabular-nums;
+  }
+  main { max-width: 860px; margin: 0 auto; }
+  .top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 10px;
+  }
+  h1 { font-size: clamp(1.6rem, 4.2vw, 2.2rem); font-weight: 700; letter-spacing: -0.01em; margin: 0 0 8px; text-wrap: balance; }
+  .subhead { color: var(--text-muted); font-size: 0.95rem; line-height: 1.55; max-width: 60ch; margin: 0 0 24px; }
+  .meta { font-family: var(--mono); font-size: 0.76rem; color: var(--text-faint); margin-bottom: 24px; }
+
+  .theme-toggle { flex: 0 0 auto; display: inline-flex; gap: 2px; padding: 3px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 999px; box-shadow: var(--shadow); }
+  .theme-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: none; border-radius: 999px; background: none; color: var(--text-faint); cursor: pointer; }
+  .theme-btn svg { width: 14px; height: 14px; }
+  .theme-btn[aria-pressed="true"] { background: var(--accent); color: var(--bg); }
+
+  .index-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    box-shadow: var(--shadow); padding: 28px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
+  }
+  .index-value { font-family: var(--mono); font-size: clamp(2.6rem, 8vw, 3.6rem); font-weight: 700; line-height: 1; }
+  .index-label { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 6px; }
+  .index-tag { font-family: var(--mono); font-size: 0.85rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; display: inline-block; margin-top: 8px; }
+  .chart-wrap { flex: 1; min-width: 220px; }
+  canvas { width: 100%; height: 80px; display: block; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .cell { background: var(--surface); padding: 16px; }
+  .cell-label { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 6px; }
+  .cell-value { font-family: var(--mono); font-size: 1.15rem; font-weight: 700; }
+  .cell-sub { font-size: 0.72rem; color: var(--text-faint); margin-top: 2px; }
+
+  .components { display: flex; flex-direction: column; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+  .component-row { display: grid; grid-template-columns: 90px 1fr 60px; align-items: center; gap: 10px; font-size: 0.85rem; }
+  .component-name { font-family: var(--mono); color: var(--text-muted); }
+  .component-bar-track { height: 6px; border-radius: 999px; background: var(--surface-raised); border: 1px solid var(--border); position: relative; overflow: hidden; }
+  .component-bar-fill { position: absolute; top: 0; bottom: 0; }
+  .component-val { font-family: var(--mono); text-align: right; font-weight: 600; }
+
+  .callout { background: var(--surface-raised); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; font-size: 0.85rem; line-height: 1.6; color: var(--text-muted); }
+  .callout code { font-family: var(--mono); background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 0.85em; }
+
+  @media (max-width: 460px) {
+    .index-card { padding: 20px; gap: 16px; }
+    .component-row { grid-template-columns: 70px 1fr 50px; font-size: 0.78rem; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="top-row">
+    <div>
+      <div class="eyebrow">Global Crypto Sentiment</div>
+      <h1>What the market actually feels right now</h1>
+    </div>
+    <div class="theme-toggle" role="group" aria-label="Theme">
+      <button class="theme-btn" id="theme-light" type="button" aria-pressed="false" title="Light">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button class="theme-btn" id="theme-system" type="button" aria-pressed="false" title="System">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      </button>
+      <button class="theme-btn" id="theme-dark" type="button" aria-pressed="false" title="Dark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+      </button>
+    </div>
+  </div>
+  <p class="subhead">
+    A composite index blending real price momentum, real crowd-sourced
+    sentiment votes, and real NLP on live news headlines — refreshed
+    every 3 minutes, not simulated.
+  </p>
+  <div class="meta" id="meta">loading…</div>
+
+  <div class="index-card">
+    <div>
+      <div class="index-label">Sentiment Index</div>
+      <div class="index-value" id="index-value">—</div>
+      <div class="index-tag" id="index-tag">—</div>
+    </div>
+    <div class="chart-wrap">
+      <div class="index-label">Last ~12 hours</div>
+      <canvas id="chart" width="600" height="80"></canvas>
+    </div>
+  </div>
+
+  <div class="grid" id="market-grid"></div>
+
+  <div class="components" id="components"></div>
+
+  <div class="callout">
+    Index = 50% price momentum (top 20 coins, market-cap weighted, every
+    cycle) + 30% <a href="https://www.coingecko.com" target="_blank" rel="noopener">CoinGecko</a>
+    community sentiment votes (BTC/ETH, refreshed every 15 min) + 20% VADER
+    sentiment on live crypto headlines (refreshed every 15 min). Scale:
+    <code>-100</code> (extreme bearish) to <code>+100</code> (extreme bullish).
+  </div>
+</main>
+
+<script>
+function setTheme(mode) {
+  if (mode === 'system') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', mode);
+  try { mode === 'system' ? localStorage.removeItem('theme') : localStorage.setItem('theme', mode); } catch (e) {}
+  document.querySelectorAll('.theme-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.getElementById(`theme-${mode}`).setAttribute('aria-pressed', 'true');
+}
+(function initTheme() {
+  let saved = 'system';
+  try { saved = localStorage.getItem('theme') || 'system'; } catch (e) {}
+  document.querySelectorAll('.theme-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.getElementById(`theme-${saved}`).setAttribute('aria-pressed', 'true');
+})();
+document.getElementById('theme-light').addEventListener('click', () => setTheme('light'));
+document.getElementById('theme-system').addEventListener('click', () => setTheme('system'));
+document.getElementById('theme-dark').addEventListener('click', () => setTheme('dark'));
+
+function tagFor(index) {
+  if (index >= 40) return { text: 'extreme bullish', color: 'var(--bull)' };
+  if (index >= 12) return { text: 'bullish', color: 'var(--bull)' };
+  if (index >= -12) return { text: 'neutral', color: 'var(--text-faint)' };
+  if (index >= -40) return { text: 'bearish', color: 'var(--bear)' };
+  return { text: 'extreme bearish', color: 'var(--bear)' };
+}
+
+function drawChart(points) {
+  const canvas = document.getElementById('chart');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  if (points.length < 2) return;
+  const values = points.map(p => p.v);
+  const min = Math.min(...values, -20), max = Math.max(...values, 20);
+  const range = max - min || 1;
+  const styles = getComputedStyle(document.documentElement);
+  const zeroY = h - ((0 - min) / range) * h;
+  ctx.strokeStyle = styles.getPropertyValue('--border').trim();
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, zeroY); ctx.lineTo(w, zeroY); ctx.stroke();
+
+  const last = values[values.length - 1];
+  ctx.strokeStyle = last >= 0 ? styles.getPropertyValue('--bull').trim() : styles.getPropertyValue('--bear').trim();
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  points.forEach((p, i) => {
+    const x = (i / (points.length - 1)) * w;
+    const y = h - ((p.v - min) / range) * h;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+}
+
+fetch('data.json')
+  .then(r => r.json())
+  .then(d => {
+    const latest = d.latest;
+    const updated = new Date(d.generated_at);
+    document.getElementById('meta').textContent = `updated ${updated.toLocaleString()} · every ~3 min`;
+
+    document.getElementById('index-value').textContent =
+      (latest.sentiment_index > 0 ? '+' : '') + latest.sentiment_index;
+    const tag = tagFor(latest.sentiment_index);
+    const tagEl = document.getElementById('index-tag');
+    tagEl.textContent = tag.text;
+    tagEl.style.background = tag.color;
+    tagEl.style.color = 'var(--bg)';
+
+    drawChart(d.recent || []);
+
+    const grid = document.getElementById('market-grid');
+    grid.innerHTML = `
+      <div class="cell">
+        <div class="cell-label">BTC</div>
+        <div class="cell-value">$${latest.btc_price.toLocaleString()}</div>
+        <div class="cell-sub" style="color:${latest.btc_change_24h >= 0 ? 'var(--bull)' : 'var(--bear)'}">${latest.btc_change_24h > 0 ? '+' : ''}${latest.btc_change_24h}% 24h</div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">ETH</div>
+        <div class="cell-value">$${latest.eth_price.toLocaleString()}</div>
+        <div class="cell-sub" style="color:${latest.eth_change_24h >= 0 ? 'var(--bull)' : 'var(--bear)'}">${latest.eth_change_24h > 0 ? '+' : ''}${latest.eth_change_24h}% 24h</div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Top Gainer</div>
+        <div class="cell-value">${latest.top_gainer}</div>
+        <div class="cell-sub" style="color:var(--bull)">+${latest.top_gainer_pct}% 24h</div>
+      </div>
+      <div class="cell">
+        <div class="cell-label">Top Loser</div>
+        <div class="cell-value">${latest.top_loser}</div>
+        <div class="cell-sub" style="color:var(--bear)">${latest.top_loser_pct}% 24h</div>
+      </div>
+    `;
+
+    const comps = [
+      { name: 'Momentum', value: latest.momentum_component, weight: '50%' },
+      { name: 'Community', value: latest.community_component, weight: '30%' },
+      { name: 'News', value: latest.news_component, weight: '20%' },
+    ];
+    const components = document.getElementById('components');
+    components.innerHTML = comps.map(c => {
+      const v = c.value === '' || c.value === null ? 0 : c.value;
+      const pct = Math.max(0, Math.min(100, ((v + 100) / 200) * 100));
+      const color = v >= 0 ? 'var(--bull)' : 'var(--bear)';
+      return `
+        <div class="component-row">
+          <div class="component-name">${c.name} <span style="opacity:.6">${c.weight}</span></div>
+          <div class="component-bar-track"><div class="component-bar-fill" style="left:0;width:${pct}%;background:${color}"></div></div>
+          <div class="component-val">${c.value === '' || c.value === null ? '—' : (v > 0 ? '+' : '') + v}</div>
+        </div>`;
+    }).join('');
+  })
+  .catch(() => {
+    document.getElementById('meta').textContent = 'data.json not found yet';
+  });
+</script>
+</body>
+</html>
