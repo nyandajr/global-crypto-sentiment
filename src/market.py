@@ -1,10 +1,28 @@
-"""Real market data from CoinGecko's free, keyless public API."""
+"""Real market data from CoinGecko's API.
+
+Uses a free Demo API key (via os.environ["COINGECKO_API_KEY"]) when one
+is set. Not because the keyless public endpoint doesn't technically
+work, but because CoinGecko's CDN firewall specifically challenges
+datacenter IPs hitting it repeatedly -- this VM's Oracle Cloud IP was
+observed getting 403 Forbidden on ~50% of anonymous requests (confirmed
+by testing the identical request from a non-datacenter network, which
+got a clean 200). An authenticated Demo request doesn't hit that same
+anonymous-traffic filter. Falls back to keyless if no key is set, so
+this still works without one -- just with the same intermittent 403s.
+"""
+
+import os
 
 import requests
 
 from config import COMMUNITY_SENTIMENT_COINS, MARKET_TOP_N, MOMENTUM_SCALE_FACTOR
 
 API = "https://api.coingecko.com/api/v3"
+
+
+def _headers():
+    key = os.environ.get("COINGECKO_API_KEY")
+    return {"x-cg-demo-api-key": key} if key else {}
 
 
 def fetch_top_coins(n=MARKET_TOP_N):
@@ -17,6 +35,7 @@ def fetch_top_coins(n=MARKET_TOP_N):
             "page": 1,
             "price_change_percentage": "1h,24h,7d",
         },
+        headers=_headers(),
         timeout=20,
     )
     resp.raise_for_status()
@@ -32,6 +51,7 @@ def fetch_community_sentiment(coin_id):
         f"{API}/coins/{coin_id}",
         params={"localization": "false", "tickers": "false", "market_data": "false",
                 "community_data": "false", "developer_data": "false"},
+        headers=_headers(),
         timeout=20,
     )
     resp.raise_for_status()

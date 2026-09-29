@@ -1,5 +1,5 @@
-"""VM-side automation entry point -- run from the VM's own crontab every 3
-minutes (~480 runs/day), not GitHub Actions -- same reasoning as every
+"""VM-side automation entry point -- run from the VM's own crontab every 4
+minutes (~360 runs/day), not GitHub Actions -- same reasoning as every
 other tracker in this portfolio (schedule triggers deliver a fraction of
 their configured cadence for sub-hourly jobs), doubly true at this
 cadence.

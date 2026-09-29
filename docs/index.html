@@ -119,7 +119,7 @@
   <p class="subhead">
     A composite index blending real price momentum, real crowd-sourced
     sentiment votes, and real NLP on live news headlines — refreshed
-    every 3 minutes, not simulated.
+    every 4 minutes, not simulated.
   </p>
   <div class="meta" id="meta">loading…</div>
 
@@ -201,7 +201,7 @@ function drawChart(points) {
   ctx.stroke();
 }
 
-const REFRESH_INTERVAL_MS = 30000; // poll well under the ~3-min pipeline cadence so new data shows within one tick
+const REFRESH_INTERVAL_MS = 30000; // poll well under the ~4-min pipeline cadence so new data shows within one tick
 
 function refresh() {
   // Cache-bust: GitHub Pages/CDN caching would otherwise serve a stale
@@ -211,7 +211,7 @@ function refresh() {
   .then(d => {
     const latest = d.latest;
     const updated = new Date(d.generated_at);
-    document.getElementById('meta').textContent = `updated ${updated.toLocaleString()} · every ~3 min`;
+    document.getElementById('meta').textContent = `updated ${updated.toLocaleString()} · every ~4 min`;
 
     document.getElementById('index-value').textContent =
       (latest.sentiment_index > 0 ? '+' : '') + latest.sentiment_index;

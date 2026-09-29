@@ -19,14 +19,14 @@ COMMUNITY_SENTIMENT_COINS = ["bitcoin", "ethereum"]
 
 # Community sentiment is cached and refreshed on this timer, not every
 # cycle -- CoinGecko's free tier rate-limited us after just 3 calls in
-# quick succession during testing, so a 3-minute cadence can't afford
+# quick succession during testing, so a 4-minute cadence can't afford
 # 2 extra per-coin calls every single run.
 COMMUNITY_REFRESH_INTERVAL_MINUTES = 15
 
 # News headlines are cached and only refreshed once this many minutes
 # have passed since the last fetch -- time-based rather than counting
 # cycles, so it self-adjusts if the cron cadence ever changes. Avoids
-# hammering Google News RSS every 3 minutes; 15 min matches the cadence
+# hammering Google News RSS every 4 minutes; 15 min matches the cadence
 # East_Africa_News_Sentiment already uses successfully against the same
 # source.
 NEWS_REFRESH_INTERVAL_MINUTES = 15
@@ -36,7 +36,7 @@ NEWS_HEADLINE_LIMIT = 20
 STATE_JSON = DATA_DIR / "state.json"
 
 # How many recent snapshots get embedded in docs/data.json for the
-# dashboard's trend chart (~12 hours at a 3-minute cadence).
+# dashboard's trend chart (~12 hours at a 4-minute cadence).
 RECENT_POINTS_FOR_CHART = 240
 
 # Composite index weights -- must sum to 1.0. Momentum carries the most

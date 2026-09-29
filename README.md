@@ -2,7 +2,7 @@
 
 A live, composite crypto market sentiment index — real price momentum,
 real crowd-sourced sentiment votes, and real NLP on live news headlines,
-blended into one number and refreshed every 3 minutes.
+blended into one number and refreshed every 4 minutes.
 
 **[Live dashboard](https://nyandajr.github.io/global-crypto-sentiment/)**
 
@@ -21,7 +21,7 @@ inventing one from nothing:
 - **News (20%)** — VADER sentiment analysis on live crypto headlines from
   Google News RSS. Refreshed every 15 minutes.
 
-Momentum updates every 3-minute cycle since that's genuinely real-time
+Momentum updates every 4-minute cycle since that's genuinely real-time
 data (prices move constantly); community and news are cached and
 refreshed on a slower timer, both because they don't change that fast in
 practice and because CoinGecko's free, keyless API rate-limits hard on
@@ -29,11 +29,11 @@ bursts (observed a 429 after just 3 calls in quick succession during
 testing) — the pipeline degrades gracefully to the last known value on a
 failed refresh rather than crashing or zeroing out a real signal.
 
-## Why every 3 minutes
+## Why every 4 minutes
 
 Crypto markets don't close, don't have quiet regional hours the way an
 East-Africa-scoped tracker does, and prices genuinely change on that
-timescale — a 3-minute cadence produces real, distinguishable snapshots
+timescale — a 4-minute cadence produces real, distinguishable snapshots
 around the clock, not padding.
 
 ## Data hygiene, learned the hard way
@@ -41,7 +41,7 @@ around the clock, not padding.
 Built the same day `East_Africa_News_Sentiment`'s `.git` history hit 30GB
 from committing a full growing CSV on every cron run for months without
 ever being garbage-collected — filled the VM's disk to 100% and took
-every tracker on the box down with it. At a 3-minute cadence that same
+every tracker on the box down with it. At a 4-minute cadence that same
 mistake would be catastrophic within weeks instead of months, so this
 pipeline was designed around it from day one:
 
