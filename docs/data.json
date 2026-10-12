@@ -1,25 +1,21 @@
 {
   "latest": {
-    "timestamp": "2026-10-12T13:12:02.490681+00:00",
-    "sentiment_index": 18.2,
-    "momentum_component": -1.49,
+    "timestamp": "2026-10-12T13:16:09.886808+00:00",
+    "sentiment_index": 17.42,
+    "momentum_component": -3.03,
     "community_component": 63.03,
     "news_component": 0.15,
-    "btc_price": 82663,
-    "btc_change_24h": -0.42,
-    "eth_price": 2529.68,
-    "eth_change_24h": 1.1,
+    "btc_price": 82598,
+    "btc_change_24h": -0.53,
+    "eth_price": 2527.96,
+    "eth_change_24h": 0.95,
     "top_gainer": "NEAR",
-    "top_gainer_pct": 5.24,
+    "top_gainer_pct": 4.85,
     "top_loser": "FIGR_HELOC",
     "top_loser_pct": -5.23
   },
-  "generated_at": "2026-10-12T13:12:02.490681+00:00",
+  "generated_at": "2026-10-12T13:16:09.886808+00:00",
   "recent": [
-    {
-      "t": "2026-10-11T21:08:02.920298+00:00",
-      "v": 24.9
-    },
     {
       "t": "2026-10-11T21:12:02.341862+00:00",
       "v": 25.45
@@ -975,6 +971,10 @@
     {
       "t": "2026-10-12T13:12:02.490681+00:00",
       "v": 18.2
+    },
+    {
+      "t": "2026-10-12T13:16:09.886808+00:00",
+      "v": 17.42
     }
   ]
 }
