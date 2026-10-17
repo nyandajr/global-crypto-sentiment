@@ -79,7 +79,13 @@ def git_commit_and_push(row):
     # aggregate push volume across the portfolio got high enough.
     token = os.environ.get("GITHUB_TOKEN")
     if token:
-        push_url = f"https://{token}@github.com/nyandajr/global-crypto-sentiment.git"
+        # x-access-token, not a bare token-as-username -- confirmed
+        # 2026-10-17 that GitHub's redirect from the no-trailing-slash
+        # push URL to the trailing-slash one drops a bare embedded
+        # token, causing every repo on this VM using that form to fail
+        # ("could not read Username for 'https://github.com'") the same
+        # day. x-access-token:TOKEN survives the redirect.
+        push_url = f"https://x-access-token:{token}@github.com/nyandajr/global-crypto-sentiment.git"
         run("git", "push", push_url, "HEAD:main")
     else:
         run("git", "push", "origin", "HEAD:main")
