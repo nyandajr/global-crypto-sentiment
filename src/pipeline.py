@@ -6,17 +6,17 @@
   - news: VADER sentiment on live crypto headlines (Google News RSS,
     cached, refreshed on the same timer)
 
-Runs every 4 minutes on the VM's own crontab (~360 real snapshots/day).
+Runs every 7 minutes on the VM's own crontab (~206 real snapshots/day).
 Both community and news are cached/timer-based rather than fetched every
 run: CoinGecko's free tier rate-limits hard on bursts (observed a 429
 after just 3 calls in quick succession during local testing), so hitting
-it for community sentiment every 4 minutes isn't viable -- only the
+it for community sentiment every 7 minutes isn't viable -- only the
 single bulk /coins/markets call happens every cycle.
 
 Appends one compact row to data/sentiment_history.csv per run -- NOT a
 full-file rewrite -- learned the hard way on East_Africa_News_Sentiment
 today that committing a full growing file on every cron cycle silently
-fills a VM's disk over a few months. A 4-minute cadence makes that
+fills a VM's disk over a few months. A 7-minute cadence makes that
 mistake catastrophic within weeks instead, so this pipeline is designed
 around small, bounded, append-only writes from the start.
 """

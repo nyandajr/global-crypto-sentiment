@@ -2,7 +2,7 @@
 
 A live, composite crypto market sentiment index — real price momentum,
 real crowd-sourced sentiment votes, and real NLP on live news headlines,
-blended into one number and refreshed every 4 minutes.
+blended into one number and refreshed every 7 minutes.
 
 **[Live dashboard](https://nyandajr.github.io/global-crypto-sentiment/)**
 
@@ -21,7 +21,7 @@ inventing one from nothing:
 - **News (20%)** — VADER sentiment analysis on live crypto headlines from
   Google News RSS. Refreshed every 15 minutes.
 
-Momentum updates every 4-minute cycle since that's genuinely real-time
+Momentum updates every 7-minute cycle since that's genuinely real-time
 data (prices move constantly); community and news are cached and
 refreshed on a slower timer, both because they don't change that fast in
 practice and because CoinGecko's free, keyless API rate-limits hard on
@@ -29,19 +29,27 @@ bursts (observed a 429 after just 3 calls in quick succession during
 testing) — the pipeline degrades gracefully to the last known value on a
 failed refresh rather than crashing or zeroing out a real signal.
 
-## Why every 4 minutes
+## Why every 7 minutes
 
 Crypto markets don't close, don't have quiet regional hours the way an
 East-Africa-scoped tracker does, and prices genuinely change on that
-timescale — a 4-minute cadence produces real, distinguishable snapshots
+timescale — a 7-minute cadence produces real, distinguishable snapshots
 around the clock, not padding.
+
+Also a hard constraint, not just a preference: the authenticated
+CoinGecko Demo key this pipeline uses caps out at 10,000 calls/month.
+The original 4-minute cadence (~360 calls/day, ~10,800/month) was
+already over that cap and hit CoinGecko's own 80%-used warning email
+on 2026-10-25 well before month-end. 7 minutes brings it to ~206
+calls/day, ~6,180/month — safely under the cap with real headroom for
+the community/news components' own periodic refresh calls.
 
 ## Data hygiene, learned the hard way
 
 Built the same day `East_Africa_News_Sentiment`'s `.git` history hit 30GB
 from committing a full growing CSV on every cron run for months without
 ever being garbage-collected — filled the VM's disk to 100% and took
-every tracker on the box down with it. At a 4-minute cadence that same
+every tracker on the box down with it. At a 7-minute cadence that same
 mistake would be catastrophic within weeks instead of months, so this
 pipeline was designed around it from day one:
 
